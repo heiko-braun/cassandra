@@ -49,7 +49,7 @@ import org.jboss.netty.handler.ssl.SslHandler;
 import org.jboss.netty.logging.InternalLoggerFactory;
 import org.jboss.netty.logging.Slf4JLoggerFactory;
 
-public class Server implements CassandraDaemon.Server
+public class Server implements org.apache.cassandra.service.Server
 {
     static
     {

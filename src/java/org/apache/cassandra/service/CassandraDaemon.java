@@ -70,8 +70,7 @@ import org.apache.cassandra.utils.Pair;
  * hooks into its lifecycle methods (see {@link #setup()}, {@link #start()},
  * {@link #stop()} and {@link #setup()}).
  */
-public class CassandraDaemon
-{
+public class CassandraDaemon implements Daemon {
     public static final String MBEAN_NAME = "org.apache.cassandra.db:type=NativeAccess";
     
     static
@@ -347,7 +346,7 @@ public class CassandraDaemon
         SystemKeyspace.finishStartup();
 
         // start server internals
-        StorageService.instance.registerDaemon(this);
+        StorageService.instance.registerHandles(this, nativeServer, thriftServer);
         try
         {
             StorageService.instance.initServer();
@@ -411,6 +410,7 @@ public class CassandraDaemon
      *
      * Hook for JSVC
      */
+    @Override
     public void start()
     {
         String nativeFlag = System.getProperty("cassandra.start_native_transport");
@@ -431,6 +431,7 @@ public class CassandraDaemon
      *
      * Hook for JSVC
      */
+    @Override
     public void stop()
     {
         // this doesn't entirely shut down Cassandra, just the RPC server.
@@ -445,12 +446,14 @@ public class CassandraDaemon
      * Clean up all resources obtained during the lifetime of the daemon. This
      * is a hook for JSVC.
      */
+    @Override
     public void destroy()
     {}
 
     /**
      * A convenience method to initialize and start the daemon in one shot.
      */
+    @Override
     public void activate()
     {
         String pidFile = System.getProperty("cassandra-pidfile");
@@ -498,6 +501,7 @@ public class CassandraDaemon
     /**
      * A convenience method to stop and destroy the daemon in one shot.
      */
+    @Override
     public void deactivate()
     {
         stop();
@@ -573,25 +577,4 @@ public class CassandraDaemon
         }
     }
 
-    public interface Server
-    {
-        /**
-         * Start the server.
-         * This method shoud be able to restart a server stopped through stop().
-         * Should throw a RuntimeException if the server cannot be started
-         */
-        public void start();
-
-        /**
-         * Stop the server.
-         * This method should be able to stop server started through start().
-         * Should throw a RuntimeException if the server cannot be stopped
-         */
-        public void stop();
-
-        /**
-         * Returns whether the server is currently running.
-         */
-        public boolean isRunning();
-    }
 }

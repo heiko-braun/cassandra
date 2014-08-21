@@ -104,6 +104,9 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     private final AtomicLong notificationSerialNumber = new AtomicLong();
 
     private final AtomicDouble severity = new AtomicDouble();
+    private Server nativeServer;
+    private Server thriftServer;
+    private Daemon daemon;
 
     private static int getRingDelay()
     {
@@ -158,7 +161,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     }
 
     private final Set<InetAddress> replicatingNodes = Collections.synchronizedSet(new HashSet<InetAddress>());
-    private CassandraDaemon daemon;
+    //private CassandraDaemon daemon;
 
     private InetAddress removingNode;
 
@@ -255,10 +258,10 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
         MessagingService.instance().registerVerbHandlers(MessagingService.Verb.ECHO, new EchoVerbHandler());
     }
 
-    public void registerDaemon(CassandraDaemon daemon)
+    /*public void registerDaemon(CassandraDaemon daemon)
     {
         this.daemon = daemon;
-    }
+    }*/
 
     public void register(IEndpointLifecycleSubscriber subscriber)
     {
@@ -295,42 +298,42 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     // should only be called via JMX
     public void startRPCServer()
     {
-        if (daemon == null)
+        if (thriftServer == null)
         {
-            throw new IllegalStateException("No configured daemon");
+            throw new IllegalStateException("No configured RPC Server");
         }
-        daemon.thriftServer.start();
+        thriftServer.start();
     }
 
     public void stopRPCServer()
     {
-        if (daemon == null)
+        if (thriftServer == null)
         {
-            throw new IllegalStateException("No configured daemon");
+            throw new IllegalStateException("No configured RPC Server");
         }
-        if (daemon.thriftServer != null)
-            daemon.thriftServer.stop();
+
+        thriftServer.stop();
     }
 
     public boolean isRPCServerRunning()
     {
-        if ((daemon == null) || (daemon.thriftServer == null))
+        if (thriftServer == null)
         {
             return false;
         }
-        return daemon.thriftServer.isRunning();
+        return thriftServer.isRunning();
     }
 
     public void startNativeTransport()
     {
-        if (daemon == null)
+        if (nativeServer == null)
         {
             throw new IllegalStateException("No configured daemon");
         }
         
         try
         {
-            daemon.nativeServer.start();
+            nativeServer.start();
         }
         catch (Exception e)
         {
@@ -340,21 +343,21 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
 
     public void stopNativeTransport()
     {
-        if (daemon == null)
+        if (nativeServer == null)
         {
             throw new IllegalStateException("No configured daemon");
         }
-        if (daemon.nativeServer != null)
-            daemon.nativeServer.stop();
+
+        nativeServer.stop();
     }
 
     public boolean isNativeTransportRunning()
     {
-        if ((daemon == null) || (daemon.nativeServer == null))
+        if (nativeServer == null)
         {
             return false;
         }
-        return daemon.nativeServer.isRunning();
+        return nativeServer.isRunning();
     }
 
     public void stopTransports()
@@ -3870,5 +3873,11 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public void setTombstoneFailureThreshold(int threshold)
     {
         DatabaseDescriptor.setTombstoneFailureThreshold(threshold);
+    }
+
+    public void registerHandles(Daemon daemon, Server nativeServer, Server thriftServer) {
+        this.daemon = daemon;
+        this.nativeServer = nativeServer;
+        this.thriftServer = thriftServer;
     }
 }

@@ -20,6 +20,7 @@ package org.apache.cassandra.thrift;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
+import org.apache.cassandra.service.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +32,7 @@ import org.apache.thrift.server.TServer;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TTransportFactory;
 
-public class ThriftServer implements CassandraDaemon.Server
+public class ThriftServer implements Server
 {
     private static Logger logger = LoggerFactory.getLogger(ThriftServer.class);
     protected final static String SYNC = "sync";
