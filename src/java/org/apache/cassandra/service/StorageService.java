@@ -406,7 +406,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             throw new IllegalStateException("No configured daemon");
         daemon.deactivate();
         // completely shut down cassandra
-        System.exit(0);
+        //System.exit(0);
     }
 
     public synchronized Collection<Token> prepareReplacementInfo() throws ConfigurationException

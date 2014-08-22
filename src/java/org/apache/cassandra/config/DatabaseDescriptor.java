@@ -113,15 +113,11 @@ public class DatabaseDescriptor
         }
         catch (ConfigurationException e)
         {
-            logger.error("Fatal configuration error", e);
-            System.err.println(e.getMessage() + "\nFatal configuration error; unable to start. See log for stacktrace.");
-            System.exit(1);
+            throw new RuntimeException("Fatal configuration error", e);
         }
         catch (Exception e)
         {
-            logger.error("Fatal error during configuration loading", e);
-            System.err.println(e.getMessage() + "\nFatal error during configuration loading; unable to start. See log for stacktrace.");
-            System.exit(1);
+            throw new RuntimeException("Fatal error during configuration loading", e);
         }
     }
 
@@ -491,9 +487,7 @@ public class DatabaseDescriptor
         // there are about 5 checked exceptions that could be thrown here.
         catch (Exception e)
         {
-            logger.error("Fatal configuration error", e);
-            System.err.println(e.getMessage() + "\nFatal configuration error; unable to start server.  See log for stacktrace.");
-            System.exit(1);
+            throw new RuntimeException("Fatal configuration error", e);
         }
         if (seedProvider.getSeeds().size() == 0)
             throw new ConfigurationException("The seed provider lists no seeds.");
@@ -601,15 +595,11 @@ public class DatabaseDescriptor
         }
         catch (ConfigurationException e)
         {
-            logger.error("Fatal error: " + e.getMessage());
-            System.err.println("Bad configuration; unable to start server");
-            System.exit(1);
+            throw new RuntimeException("Fatal error: " + e.getMessage());
         }
         catch (FSWriteError e)
         {
-            logger.error("Fatal error: " + e.getMessage());
-            System.err.println(e.getCause().getMessage() + "; unable to start server");
-            System.exit(1);
+            throw new RuntimeException("Fatal error: " + e.getMessage());
         }
     }
 
