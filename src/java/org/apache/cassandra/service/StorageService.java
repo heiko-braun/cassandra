@@ -3875,9 +3875,15 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
         DatabaseDescriptor.setTombstoneFailureThreshold(threshold);
     }
 
-    public void registerHandles(Daemon daemon, Server nativeServer, Server thriftServer) {
+    public void registerDaemon(Daemon daemon) {
         this.daemon = daemon;
-        this.nativeServer = nativeServer;
+    }
+
+    public void registerThriftServer(Server thriftServer) {
         this.thriftServer = thriftServer;
+    }
+
+    public void registerNativeServer(Server nativeServer) {
+        this.nativeServer = nativeServer;
     }
 }
