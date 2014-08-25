@@ -21,6 +21,7 @@ import java.io.*;
 import java.lang.management.MemoryUsage;
 import java.net.ConnectException;
 import java.net.InetAddress;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -28,6 +29,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import javax.management.openmbean.TabularData;
+import javax.management.remote.JMXServiceURL;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.LinkedHashMultimap;
@@ -77,6 +79,7 @@ public class NodeCmd
     private static final Pair<String, String> RESOLVE_IP = Pair.create("r", "resolve-ip");
     private static final Pair<String, String> SCRUB_SKIP_CORRUPTED_OPT = Pair.create("s", "skip-corrupted");
     private static final Pair<String, String> COMPACT_OPT = Pair.create("c", "compact");
+    private static final Pair<String, String> JMX_URL = Pair.create("url", "jmxurl");
 
     private static final String DEFAULT_HOST = "127.0.0.1";
     private static final int DEFAULT_PORT = 7199;
@@ -107,6 +110,7 @@ public class NodeCmd
         options.addOption(RESOLVE_IP, false, "show node domain names instead of IPs");
         options.addOption(SCRUB_SKIP_CORRUPTED_OPT, false, "when scrubbing counter tables, skip corrupted rows");
         options.addOption(COMPACT_OPT, false, "print histograms in a more compact format");
+        options.addOption(JMX_URL, true, "full qualified JMX url (overrides -host and -port)");
     }
 
     public NodeCmd(NodeProbe probe)
@@ -196,10 +200,10 @@ public class NodeCmd
         StringBuilder header = new StringBuilder(512);
         header.append("\nAvailable commands\n");
         final NodeToolHelp ntHelp = loadHelp();
-        Collections.sort(ntHelp.commands, new Comparator<NodeToolHelp.NodeToolCommand>() 
+        Collections.sort(ntHelp.commands, new Comparator<NodeToolHelp.NodeToolCommand>()
         {
             @Override
-            public int compare(NodeToolHelp.NodeToolCommand o1, NodeToolHelp.NodeToolCommand o2) 
+            public int compare(NodeToolHelp.NodeToolCommand o1, NodeToolHelp.NodeToolCommand o2)
             {
                 return o1.name.compareTo(o2.name);
             }
@@ -235,7 +239,7 @@ public class NodeCmd
         if (cmd.name.length() <= 20)
             for (int i = cmd.name.length(); i < 22; ++i) sb.append(" ");
         sb.append(" - ").append(cmd.help);
-  }
+    }
 
 
     /**
@@ -304,7 +308,7 @@ public class NodeCmd
     }
 
     private void printDc(PrintStream outs, String format, String dc, LinkedHashMultimap<String, String> endpointsToTokens,
-            boolean keyspaceSelected, Map<InetAddress, Float> filteredOwnerships)
+                         boolean keyspaceSelected, Map<InetAddress, Float> filteredOwnerships)
     {
         Collection<String> liveNodes = probe.getLiveNodes();
         Collection<String> deadNodes = probe.getUnreachableNodes();
@@ -352,8 +356,8 @@ public class NodeCmd
                 String status = liveNodes.contains(endpoint)
                         ? "Up"
                         : deadNodes.contains(endpoint)
-                                ? "Down"
-                                : "?";
+                        ? "Down"
+                        : "?";
 
                 String state = "Normal";
 
@@ -447,7 +451,7 @@ public class NodeCmd
         }
 
         private Map<String, SetHostStat> getOwnershipByDc(SetHostStat ownerships)
-        throws UnknownHostException
+                throws UnknownHostException
         {
             Map<String, SetHostStat> ownershipByDc = Maps.newLinkedHashMap();
             EndpointSnitchInfoMBean epSnitchInfo = probe.getEndpointSnitchInfoProxy();
@@ -486,7 +490,7 @@ public class NodeCmd
         }
 
         private void printNode(HostStat hostStat,
-                boolean hasEffectiveOwns, boolean isTokenPerNode) throws UnknownHostException
+                               boolean hasEffectiveOwns, boolean isTokenPerNode) throws UnknownHostException
         {
             String status, state, load, strOwns, hostID, rack, fmt;
             fmt = getFormat(hasEffectiveOwns, isTokenPerNode);
@@ -595,12 +599,12 @@ public class NodeCmd
             String poolName = thread.getKey();
             JMXEnabledThreadPoolExecutorMBean threadPoolProxy = thread.getValue();
             outs.printf("%-25s%10s%10s%15s%10s%18s%n",
-                        poolName,
-                        threadPoolProxy.getActiveCount(),
-                        threadPoolProxy.getPendingTasks(),
-                        threadPoolProxy.getCompletedTasks(),
-                        threadPoolProxy.getCurrentlyBlockedTasks(),
-                        threadPoolProxy.getTotalBlockedTasks());
+                    poolName,
+                    threadPoolProxy.getActiveCount(),
+                    threadPoolProxy.getPendingTasks(),
+                    threadPoolProxy.getCompletedTasks(),
+                    threadPoolProxy.getCurrentlyBlockedTasks(),
+                    threadPoolProxy.getTotalBlockedTasks());
         }
 
         outs.printf("%n%-20s%10s%n", "Message type", "Dropped");
@@ -656,23 +660,23 @@ public class NodeCmd
 
         // Key Cache: Hits, Requests, RecentHitRate, SavePeriodInSeconds
         outs.printf("%-17s: size %d (bytes), capacity %d (bytes), %d hits, %d requests, %.3f recent hit rate, %d save period in seconds%n",
-                    "Key Cache",
-                    cacheService.getKeyCacheSize(),
-                    cacheService.getKeyCacheCapacityInBytes(),
-                    cacheService.getKeyCacheHits(),
-                    cacheService.getKeyCacheRequests(),
-                    cacheService.getKeyCacheRecentHitRate(),
-                    cacheService.getKeyCacheSavePeriodInSeconds());
+                "Key Cache",
+                cacheService.getKeyCacheSize(),
+                cacheService.getKeyCacheCapacityInBytes(),
+                cacheService.getKeyCacheHits(),
+                cacheService.getKeyCacheRequests(),
+                cacheService.getKeyCacheRecentHitRate(),
+                cacheService.getKeyCacheSavePeriodInSeconds());
 
         // Row Cache: Hits, Requests, RecentHitRate, SavePeriodInSeconds
         outs.printf("%-17s: size %d (bytes), capacity %d (bytes), %d hits, %d requests, %.3f recent hit rate, %d save period in seconds%n",
-                    "Row Cache",
-                    cacheService.getRowCacheSize(),
-                    cacheService.getRowCacheCapacityInBytes(),
-                    cacheService.getRowCacheHits(),
-                    cacheService.getRowCacheRequests(),
-                    cacheService.getRowCacheRecentHitRate(),
-                    cacheService.getRowCacheSavePeriodInSeconds());
+                "Row Cache",
+                cacheService.getRowCacheSize(),
+                cacheService.getRowCacheCapacityInBytes(),
+                cacheService.getRowCacheHits(),
+                cacheService.getRowCacheRequests(),
+                cacheService.getRowCacheRecentHitRate(),
+                cacheService.getRowCacheSavePeriodInSeconds());
 
         if (toks.size() > 1 && cmd.hasOption(TOKENS_OPT.left))
         {
@@ -756,18 +760,18 @@ public class NodeCmd
         for (Map<String, String> c : cm.getCompactions())
         {
             String percentComplete = new Long(c.get("total")) == 0
-                                   ? "n/a"
-                                   : new DecimalFormat("0.00").format((double) new Long(c.get("completed")) / new Long(c.get("total")) * 100) + "%";
+                    ? "n/a"
+                    : new DecimalFormat("0.00").format((double) new Long(c.get("completed")) / new Long(c.get("total")) * 100) + "%";
             outs.printf("%25s%16s%16s%16s%16s%10s%10s%n", c.get("taskType"), c.get("keyspace"), c.get("columnfamily"), c.get("completed"), c.get("total"), c.get("unit"), percentComplete);
             if (c.get("taskType").equals(OperationType.COMPACTION.toString()))
                 remainingBytes += (new Long(c.get("total")) - new Long(c.get("completed")));
         }
         long remainingTimeInSecs = compactionThroughput == 0 || remainingBytes == 0
-                        ? -1
-                        : (remainingBytes) / (long) (1024L * 1024L * compactionThroughput);
+                ? -1
+                : (remainingBytes) / (long) (1024L * 1024L * compactionThroughput);
         String remainingTime = remainingTimeInSecs < 0
-                        ? "n/a"
-                        : String.format("%dh%02dm%02ds", remainingTimeInSecs / 3600, (remainingTimeInSecs % 3600) / 60, (remainingTimeInSecs % 60));
+                ? "n/a"
+                : String.format("%dh%02dm%02ds", remainingTimeInSecs / 3600, (remainingTimeInSecs % 3600) / 60, (remainingTimeInSecs % 60));
 
         outs.printf("%25s%10s%n", "Active compaction remaining time : ", remainingTime);
     }
@@ -781,8 +785,8 @@ public class NodeCmd
     {
         ColumnFamilyStoreMBean cfsProxy = probe.getCfsProxy(ks, cf);
         outs.println("Current compaction thresholds for " + ks + "/" + cf + ": \n" +
-                     " min = " + cfsProxy.getMinimumCompactionThreshold() + ", " +
-                     " max = " + cfsProxy.getMaximumCompactionThreshold());
+                " min = " + cfsProxy.getMinimumCompactionThreshold() + ", " +
+                " max = " + cfsProxy.getMaximumCompactionThreshold());
     }
 
     /**
@@ -1096,7 +1100,7 @@ public class NodeCmd
 
         for (InetAddress anEndpoint : endpoints)
         {
-           output.println(anEndpoint.getHostAddress());
+            output.println(anEndpoint.getHostAddress());
         }
     }
 
@@ -1133,20 +1137,31 @@ public class NodeCmd
             badUse(p.getMessage());
         }
 
-        String host = cmd.hasOption(HOST_OPT.left) ? cmd.getOptionValue(HOST_OPT.left) : DEFAULT_HOST;
+        String host = null;
+        int port = -1;
+        JMXServiceURL jmxUrl = null;
 
-        int port = DEFAULT_PORT;
-
-        String portNum = cmd.getOptionValue(PORT_OPT.left);
-        if (portNum != null)
+        if(cmd.hasOption(JMX_URL.left))
         {
-            try
+            jmxUrl = new JMXServiceURL(cmd.getOptionValue(JMX_URL.left));
+        }
+        else
+        {
+            host = cmd.hasOption(HOST_OPT.left) ? cmd.getOptionValue(HOST_OPT.left) : DEFAULT_HOST;
+
+            port = DEFAULT_PORT;
+
+            String portNum = cmd.getOptionValue(PORT_OPT.left);
+            if (portNum != null)
             {
-                port = Integer.parseInt(portNum);
-            }
-            catch (NumberFormatException e)
-            {
-                throw new ParseException("Port must be a number");
+                try
+                {
+                    port = Integer.parseInt(portNum);
+                }
+                catch (NumberFormatException e)
+                {
+                    throw new ParseException("Port must be a number");
+                }
             }
         }
 
@@ -1176,7 +1191,15 @@ public class NodeCmd
 
             try
             {
-                probe = username == null ? new NodeProbe(host, port) : new NodeProbe(host, port, username, password);
+                if(jmxUrl !=null) {
+                    probe = username == null ? new NodeProbe(jmxUrl) : new NodeProbe(jmxUrl, username, password);
+                }
+                else if (host!=null && port>0)
+                {
+                    probe = username == null ? new NodeProbe(host, port) : new NodeProbe(host, port, username, password);
+                }
+
+
             }
             catch (IOException ioe)
             {
@@ -1577,8 +1600,8 @@ public class NodeCmd
         System.out.print("Requested " + ((nc == NodeCommand.SNAPSHOT) ? "creating" : "clearing") + " snapshot for: ");
         if ( keyspaces.length > 0 )
         {
-          for (int i = 0; i < keyspaces.length; i++)
-              System.out.print(keyspaces[i] + " ");
+            for (int i = 0; i < keyspaces.length; i++)
+                System.out.print(keyspaces[i] + " ");
         }
         else
         {

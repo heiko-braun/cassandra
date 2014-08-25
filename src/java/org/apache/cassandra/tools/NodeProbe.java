@@ -24,6 +24,7 @@ import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryUsage;
 import java.lang.management.RuntimeMXBean;
 import java.net.InetAddress;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -68,8 +69,9 @@ public class NodeProbe
     private static final String fmtUrl = "service:jmx:rmi:///jndi/rmi://%s:%d/jmxrmi";
     private static final String ssObjName = "org.apache.cassandra.db:type=StorageService";
     private static final int defaultPort = 7199;
-    final String host;
-    final int port;
+    private JMXServiceURL jmxUrl;
+    String host;
+    int port;
     private String username;
     private String password;
 
@@ -133,14 +135,31 @@ public class NodeProbe
         connect();
     }
 
+    public NodeProbe(JMXServiceURL jmxUrl) throws IOException{
+        this.jmxUrl = jmxUrl;
+        connect(jmxUrl);
+    }
+
+    public NodeProbe(JMXServiceURL jmxUrl, String username, String password) throws IOException{
+        this.jmxUrl = jmxUrl;
+        this.username = username;
+        this.password = password;
+        connect(jmxUrl);
+    }
+
+    private void connect() throws IOException
+    {
+        JMXServiceURL jmxUrl = new JMXServiceURL(String.format(fmtUrl, host, port));
+        connect(jmxUrl);
+    }
+
     /**
      * Create a connection to the JMX agent and setup the M[X]Bean proxies.
      *
      * @throws IOException on connection failures
      */
-    private void connect() throws IOException
+    private void connect(JMXServiceURL jmxUrl) throws IOException
     {
-        JMXServiceURL jmxUrl = new JMXServiceURL(String.format(fmtUrl, host, port));
         Map<String,Object> env = new HashMap<String,Object>();
         if (username != null)
         {
