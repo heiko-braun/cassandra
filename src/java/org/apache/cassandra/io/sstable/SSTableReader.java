@@ -326,9 +326,10 @@ public class SSTableReader extends SSTable
         String partitionerName = partitioner.getClass().getCanonicalName();
         if (validationMetadata != null && !partitionerName.equals(validationMetadata.partitioner))
         {
-            logger.error(String.format("Cannot open %s; partitioner %s does not match system partitioner %s.  Note that the default partitioner starting with Cassandra 1.2 is Murmur3Partitioner, so you will need to edit that to match your old partitioner if upgrading.",
-                                              descriptor, validationMetadata.partitioner, partitionerName));
-            System.exit(1);
+            throw new IllegalArgumentException(
+                    String.format("Cannot open %s; partitioner %s does not match system partitioner %s.  Note that the default partitioner starting with Cassandra 1.2 is Murmur3Partitioner, so you will need to edit that to match your old partitioner if upgrading.",
+                                                                  descriptor, validationMetadata.partitioner, partitionerName)
+            );
         }
 
         logger.info("Opening {} ({} bytes)", descriptor, new File(descriptor.filenameFor(Component.DATA)).length());
@@ -375,9 +376,10 @@ public class SSTableReader extends SSTable
         String partitionerName = partitioner.getClass().getCanonicalName();
         if (validationMetadata != null && !partitionerName.equals(validationMetadata.partitioner))
         {
-            logger.error(String.format("Cannot open %s; partitioner %s does not match system partitioner %s.  Note that the default partitioner starting with Cassandra 1.2 is Murmur3Partitioner, so you will need to edit that to match your old partitioner if upgrading.",
-                                              descriptor, validationMetadata.partitioner, partitionerName));
-            System.exit(1);
+            throw new IllegalArgumentException(
+                    String.format("Cannot open %s; partitioner %s does not match system partitioner %s.  Note that the default partitioner starting with Cassandra 1.2 is Murmur3Partitioner, so you will need to edit that to match your old partitioner if upgrading.",
+                                                                  descriptor, validationMetadata.partitioner, partitionerName)
+            );
         }
 
         logger.info("Opening {} ({} bytes)", descriptor, new File(descriptor.filenameFor(Component.DATA)).length());
