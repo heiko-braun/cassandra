@@ -496,6 +496,8 @@ public class CassandraDaemon
     {
         stop();
         destroy();
+        // completely shut down cassandra
+        System.exit(0);
     }
 
     private void waitForGossipToSettle()
